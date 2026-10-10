@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
 """
-new_mk_run.py — Launcher for new_mk.so
-Runs the hidden Python source (renamed to .so) as __main__.
+new_mk_run.py — Launcher for new_mk.so (Auto-Detect)
+Finds new_mk.so, or falls back to new_mk_32bit.so / new_mk_64bit.so,
+then runs it as __main__ via runpy.
 """
 
 import os
 import sys
 import runpy
+import shutil
 import traceback
 
-# ── Resolve script directory (so tested.txt / found.txt stay together) ──
+# ── Resolve script directory ──
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-TARGET = os.path.join(SCRIPT_DIR, "new_mk.so")
-
-# ── Change to script directory ──
 os.chdir(SCRIPT_DIR)
+
+# ── Candidate filenames (priority order) ──
+CANDIDATES = [
+    "new_mk.so",
+    "new_mk_32bit.so",
+    "new_mk_64bit.so",
+    "mkmk.so",
+    "mkmk_32bit.so",
+    "mkmk_64bit.so",
+]
+
+PRIMARY = os.path.join(SCRIPT_DIR, "new_mk.so")
 
 
 def _die(msg: str, code: int = 1):
@@ -22,21 +33,38 @@ def _die(msg: str, code: int = 1):
     sys.exit(code)
 
 
+def find_target() -> str:
+    """Return path to new_mk.so, auto-renaming alternatives if needed."""
+    # 1) Already correct
+    if os.path.isfile(PRIMARY):
+        return PRIMARY
+
+    # 2) Look for alternatives and rename
+    for name in CANDIDATES[1:]:
+        path = os.path.join(SCRIPT_DIR, name)
+        if os.path.isfile(path):
+            print(f"\033[1;33m⚠️  Found: {name}\033[0m")
+            print(f"\033[1;33m⚠️  Renaming → new_mk.so\033[0m")
+            try:
+                shutil.move(path, PRIMARY)
+                return PRIMARY
+            except Exception as e:
+                _die(f"Rename failed: {e}")
+
+    _die(
+        f"new_mk.so not found in:\n   {SCRIPT_DIR}\n"
+        f"   Candidates tried: {', '.join(CANDIDATES)}"
+    )
+
+
 def main():
-    # ── Check target file ──
-    if not os.path.exists(TARGET):
-        _die(f"File not found: {TARGET}")
-    if not os.path.isfile(TARGET):
-        _die(f"Not a file: {TARGET}")
+    target = find_target()
+    print(f"\033[1;32m✅ Running: {os.path.basename(target)}\033[0m\n")
 
-    # ── Ensure Python can be found on some Termux setups ──
-    # (no-op here, just for safety)
-
-    # ── Run new_mk.so as __main__ ──
     try:
-        runpy.run_path(TARGET, run_name="__main__")
+        runpy.run_path(target, run_name="__main__")
     except SystemExit:
-        # Allow clean exit from sys.exit() inside new_mk.so
+        # clean exit from sys.exit() inside new_mk.so
         raise
     except KeyboardInterrupt:
         print("\n\033[1;33m⚠️ Interrupted\033[0m")
