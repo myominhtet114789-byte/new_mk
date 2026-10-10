@@ -36,11 +36,21 @@ ARCH=$(getprop ro.product.cpu.abi)
 if [ "$ARCH" = "arm64-v8a" ]; then
     echo -e "\033[94m[*] 64-bit ဖုန်းဖြစ်ကြောင်း စစ်ဆေးတွေ့ရှိရသဖြင့် 64-bit version ကို ဒေါင်းလုဒ်ဆွဲနေသည်...\033[0m"
     curl -LO https://raw.githubusercontent.com/myominhtet114789-byte/new_mk/main/new_mk_64bit.so
-    mv mkmk_64bit.so new_mk.so
+    if [ -f "new_mk_64bit.so" ]; then
+        mv new_mk_64bit.so new_mk.so
+        echo -e "\033[92m[✔] 64-bit → new_mk.so ပြောင်းပြီးပါပြီ\033[0m"
+    else
+        echo -e "\033[91m[✘] new_mk_64bit.so ဒေါင်းလုဒ် မအောင်မြင်ပါ\033[0m"
+    fi
 else
     echo -e "\033[94m[*] 32-bit ဖုန်းဖြစ်ကြောင်း စစ်ဆေးတွေ့ရှိရသဖြင့် 32-bit version ကို ဒေါင်းလုဒ်ဆွဲနေသည်...\033[0m"
     curl -LO https://raw.githubusercontent.com/myominhtet114789-byte/new_mk/main/new_mk_32bit.so
-    mv mkmk_32bit.so new_mk.so
+    if [ -f "new_mk_32bit.so" ]; then
+        mv new_mk_32bit.so new_mk.so
+        echo -e "\033[92m[✔] 32-bit → new_mk.so ပြောင်းပြီးပါပြီ\033[0m"
+    else
+        echo -e "\033[91m[✘] new_mk_32bit.so ဒေါင်းလုဒ် မအောင်မြင်ပါ\033[0m"
+    fi
 fi
 
 # ─── ၄။ Starter ဖိုင်ကို ဒေါင်းမယ် ───
@@ -50,5 +60,9 @@ curl -LO https://raw.githubusercontent.com/myominhtet114789-byte/new_mk/main/new
 echo -e "\n\033[94m[*] ဖိုင်များ စစ်ဆေးနေသည်...\033[0m"
 ls -lh ~/mkmk/
 
-echo -e "\033[92m[✔] အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ!\033[0m"
-echo -e "\033[93mအသုံးပြုရန်: cd ~/mkmk && python new_mk_run.py\033[0m"
+if [ -f "$HOME/mkmk/new_mk.so" ]; then
+    echo -e "\033[92m[✔] အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ!\033[0m"
+    echo -e "\033[93mအသုံးပြုရန်: cd ~/mkmk && python new_mk_run.py\033[0m"
+else
+    echo -e "\033[91m[✘] new_mk.so မရှိပါ။ ပြန်စမ်းပါ။\033[0m"
+fi
